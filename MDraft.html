@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Markdown Editor</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="app.js"></script>
+</head>
+<body>
+    <div id="app-container">
+        <div id="toolbar">
+            <button id="new-btn">New</button>
+            <div class="file-input-wrapper">
+                <input type="file" id="file-input" class="custom-file-input" onchange="handleFileDrop(event)" >
+                <button class="file-input-text">Open</span>
+              </div>             
+            
+            <button id="save-btn" onclick="handleSaveButton(event)">Save</button>
+            <button id="toggle-mode-btn" onclick="handleToggleButton(event)">Toggle View/Edit</button>            
+        </div>
+        <div id="save-modal" class="modal">
+            <div class="modal-content">
+                <h4>Choose File Format</h4>
+                <p>
+                    <label>
+                        <input type="radio" name="file-format-radio" value="markdown" checked>
+                        <span>Markdown</span>
+                    </label>
+                </p>
+                <p>
+                    <label>
+                        <input type="radio" name="file-format-radio" value="html">
+                        <span>HTML</span>
+                    </label>
+                </p>
+                <button id="save-file-btn" onclick="handleSaveFileButton(event)">Save</button>
+                <button id="cancel-save-btn" onclick="handleCancelSaveButton(event)">Cancel</button>
+            </div>
+        </div>
+        
+        
+        <textarea id="markdown-editor" style="display:none;"></textarea>
+        <div id="markdown-display"></div>
+    </div>    
+</body>
+</html>
