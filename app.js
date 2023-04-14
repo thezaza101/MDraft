@@ -1,33 +1,117 @@
+function handleMarkdownEditorInput(event) {
+    const selection = saveCaretPosition(event.target);
+    
+    const lines = event.target.innerText.split('\n');
+    const formattedLines = lines.map((line, index) => {
+      const result = processLine(line, lines, index);
+      index += result.linesProcessed - 1;
+      return result.html;
+    });
+  
+    event.target.innerHTML = formattedLines.join('\n');
+    
+    restoreCaretPosition(event.target, selection);
+  }
+  
+  function saveCaretPosition(containerEl) {
+    const selection = window.getSelection();
+    const range = selection.getRangeAt(0);
+    const preSelectionRange = range.cloneRange();
+    preSelectionRange.selectNodeContents(containerEl);
+    preSelectionRange.setEnd(range.startContainer, range.startOffset);
+    const start = preSelectionRange.toString().length;
+  
+    return {
+      start: start,
+      end: start + range.toString().length
+    };
+  }
+
+  function handleKeyPress(event) {
+    if (event.key === 'Enter') {
+      event.preventDefault();
+      const selection = saveCaretPosition(event.target);
+      event.target.innerHTML = event.target.innerHTML.slice(0, selection.start) + '<br>' + event.target.innerHTML.slice(selection.end);
+      restoreCaretPosition(event.target, { start: selection.start + 1, end: selection.start + 1 });
+    }
+  }
+  
+  function restoreCaretPosition(containerEl, savedPos) {
+    let charCount = 0;
+    const range = document.createRange();
+    const selection = window.getSelection();
+    const nodeStack = [containerEl];
+    let node;
+    let foundStart = false;
+  
+    while ((node = nodeStack.pop())) {
+      if (node.nodeType === 3) {
+        const nextCharCount = charCount + node.length;
+        if (!foundStart && savedPos.start >= charCount && savedPos.start <= nextCharCount) {
+          range.setStart(node, savedPos.start - charCount);
+          foundStart = true;
+        }
+        if (foundStart && savedPos.end >= charCount && savedPos.end <= nextCharCount) {
+          range.setEnd(node, savedPos.end - charCount);
+          break;
+        }
+        charCount = nextCharCount;
+      } else {
+        for (let i = node.childNodes.length - 1; i >= 0; i--) {
+          nodeStack.push(node.childNodes[i]);
+        }
+      }
+    }
+  
+    selection.removeAllRanges();
+    selection.addRange(range);
+  }
+  
+
+
 function parseMarkdown(markdown) {
     const lines = markdown.split('\n');
     let htmlOutput = '';
 
     for (let i = 0; i < lines.length; i++) {
         const line = lines[i];
-
-        if (line.startsWith('#')) {
-            htmlOutput += handleHeader(line);
-        } else if (line.startsWith('>')) {
-            htmlOutput += handleBlockquote(line);
-        } else if (line.startsWith('```')) {
-            const fencedCodeBlock = lines.slice(i).join('\n');
-            const result = handleFencedCodeBlock(fencedCodeBlock);
-            htmlOutput += result.html;
-            i += result.linesProcessed - 1;
-        } else if (isTable(lines.slice(i))) {
-            const table = lines.slice(i).join('\n');
-            const result = handleTable(table);
-            htmlOutput += result.html;
-            i += result.linesProcessed - 1;
-        } else if (line.startsWith('- [ ]') || line.startsWith('- [x]')) {
-            htmlOutput += handleTaskList(line);
-        } else {
-            htmlOutput += handleInlineElements(line);
-            htmlOutput += '<br>';
-        }
+        const result = processLine(line, lines, i);
+        htmlOutput += result.html;
+        i += result.linesProcessed - 1;
     }
 
     return htmlOutput;
+}
+
+function processLine(line, lines, currentIndex) {
+    let html = '';
+    let linesProcessed = 1;
+
+    if (line.startsWith('#')) {
+        html = handleHeader(line);
+    } else if (line.startsWith('>')) {
+        html = handleBlockquote(line);
+    } else if (line.startsWith('```')) {
+        const fencedCodeBlock = lines.slice(currentIndex).join('\n');
+        const result = handleFencedCodeBlock(fencedCodeBlock);
+        html = result.html;
+        linesProcessed = result.linesProcessed;
+    } else if (isTable(lines.slice(currentIndex))) {
+        const table = lines.slice(currentIndex).join('\n');
+        const result = handleTable(table);
+        html = result.html;
+        linesProcessed = result.linesProcessed;
+    } else if (line.startsWith('- [ ]') || line.startsWith('- [x]')) {
+        html = handleTaskList(line);
+    } else {
+        html = handleInlineElements(line);
+        html += '\n';
+    }
+
+    return {
+        html: html,
+        linesProcessed: linesProcessed,
+    };
 }
 
 function isTable(lines) {
@@ -202,7 +286,7 @@ function handleFileDrop(evt) {
         reader.onload = function (event) {
             const markdownContent = event.target.result;
             data = markdownContent;
-            markdownEditor.value = markdownContent;
+            markdownEditor.value = parseMarkdown(markdownContent);
             isEditMode = true;
             handleToggleButton(null);
 
@@ -225,7 +309,7 @@ function handleToggleButton(evt) {
 
     if (isEditMode) {
         const markdown = data;
-        markdownEditor.value = markdown;
+        markdownEditor.innerHTML = parseMarkdown(markdown);
         markdownEditor.style.display = 'block';
         markdownViewer.style.display = 'none';
         toggleModeBtn.textContent = 'Toggle View';

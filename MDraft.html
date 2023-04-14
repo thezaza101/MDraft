@@ -40,7 +40,9 @@
         </div>
         
         
-        <textarea id="markdown-editor" style="display:none;"></textarea>
+        <!--textarea id="markdown-editor" style="display:none;"></textarea-->
+        <div id="markdown-editor" contenteditable="true" style="display:none;" oninput="handleMarkdownEditorInput(event)" onkeydown="handleKeyPress(event)"></div>
+
         <div id="markdown-display"></div>
     </div>    
 </body>
