@@ -231,7 +231,8 @@ function handleToggleButton(evt) {
         toggleModeBtn.textContent = 'Toggle View';
     } else {
         const markdown = markdownEditor.value;
-        const html = parseMarkdown(markdown);
+        data = markdown;
+        const html = parseMarkdown(markdown);        
         markdownViewer.innerHTML = html;
         markdownEditor.style.display = 'none';
         markdownViewer.style.display = 'block';
