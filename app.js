@@ -1,15 +1,20 @@
 function handleMarkdownEditorInput(event) {
     const selection = saveCaretPosition(event.target);
-    
-    const lines = event.target.innerText.split('\n');
+  
+    const lines = event.target.innerHTML.split(/(?:<br>)+/);
     const formattedLines = lines.map((line, index) => {
       const result = processLine(line, lines, index);
       index += result.linesProcessed - 1;
       return result.html;
     });
   
-    event.target.innerHTML = formattedLines.join('\n');
-    
+    event.target.innerHTML = formattedLines.join('<br>');
+    if (event.inputType === 'insertParagraph')
+    {
+        selection.start++;
+        selection.end++;
+    }
+  
     restoreCaretPosition(event.target, selection);
   }
   
@@ -25,15 +30,6 @@ function handleMarkdownEditorInput(event) {
       start: start,
       end: start + range.toString().length
     };
-  }
-
-  function handleKeyPress(event) {
-    if (event.key === 'Enter') {
-      event.preventDefault();
-      const selection = saveCaretPosition(event.target);
-      event.target.innerHTML = event.target.innerHTML.slice(0, selection.start) + '<br>' + event.target.innerHTML.slice(selection.end);
-      restoreCaretPosition(event.target, { start: selection.start + 1, end: selection.start + 1 });
-    }
   }
   
   function restoreCaretPosition(containerEl, savedPos) {
